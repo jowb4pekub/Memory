@@ -8,7 +8,7 @@ edition = "2021"
 [[bin]]
 name = "mem_hack"
 path = "src/mem_hack.rs"
-
+ 
 [dependencies]
 winapi = { version = "0.3", features = ["winuser","libloaderapi","sysinfoapi","tlhelp32","memoryapi","handleapi","psapi","processthreadsapi"] }
 sysinfo = { version = "0.29", default-features = false }
