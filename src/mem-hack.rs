@@ -6,17 +6,13 @@ use std::io;
 use std::mem;
 use std::ptr;
 
-use std::ffi::CStr;
 use winapi::ctypes::c_void;
-use winapi::shared::minwindef::{DWORD, LPVOID, MAX_PATH};
+use winapi::shared::minwindef::{DWORD, LPVOID};
 use winapi::um::memoryapi::{ReadProcessMemory, VirtualQueryEx, WriteProcessMemory};
 use winapi::um::processthreadsapi::OpenProcess;
-use winapi::um::psapi::GetModuleBaseNameA;
 use winapi::um::sysinfoapi::SYSTEM_INFO;
-use winapi::um::tlhelp32::{
-    CreateToolhelp32Snapshot, Process32First, Process32Next, PROCESSENTRY32,
-};
-use winapi::um::winnt::{HANDLE, PROCESS_ALL_ACCESS, PROCESS_QUERY_INFORMATION, PROCESS_VM_READ};
+use winapi::um::tlhelp32::{CreateToolhelp32Snapshot, Process32First, PROCESSENTRY32};
+use winapi::um::winnt::{HANDLE, PROCESS_ALL_ACCESS};
 use winapi::um::winnt::{MEMORY_BASIC_INFORMATION, PAGE_READWRITE};
 
 fn scan_and_modify_memory(
@@ -72,6 +68,7 @@ fn scan_and_modify_memory(
                             ) != 0
                             {
                                 println!("Memory modified.");
+                                // println!("");
                                 return Ok(());
                             } else {
                                 return Err(io::Error::last_os_error());
@@ -88,7 +85,8 @@ fn scan_and_modify_memory(
         }
     }
 
-    println!("Value not found.");
+    // println!("Value not found.");
+    println!("");
     Ok(())
 }
 
@@ -115,17 +113,7 @@ fn auto_scan_and_modify_memory(
     for p in system.processes_by_name(exe_name) {
         if exe_name == p.name() {
             let process_id = p.pid().as_u32();
-            println!("Process ID: {}", process_id);
-            scan_and_modify_memory(process_id, search_value, new_value)?;
-        }
-    }
-
-    while unsafe { Process32Next(snapshot, &mut process_entry) } != 0 {
-        let process_id = process_entry.th32ProcessID;
-        let process_name = get_module_base_name(process_id)?;
-
-        if process_name == exe_name {
-            println!("Process ID: {}", process_id);
+            // println!("Process ID: {}", process_id);
             scan_and_modify_memory(process_id, search_value, new_value)?;
         }
     }
@@ -133,38 +121,13 @@ fn auto_scan_and_modify_memory(
     Ok(())
 }
 
-fn get_module_base_name(process_id: DWORD) -> io::Result<String> {
-    let mut sz_process_name: [i8; MAX_PATH] = [0; MAX_PATH];
-    let h_process: HANDLE =
-        unsafe { OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, 0, process_id) };
-    if h_process.is_null() {
-        return Err(io::Error::last_os_error());
-    }
- 
-    unsafe {
-        if GetModuleBaseNameA(
-            h_process,
-            std::ptr::null_mut(),
-            sz_process_name.as_mut_ptr(),
-            MAX_PATH as u32,
-        ) != 0
-        {
-            let cstr = CStr::from_ptr(sz_process_name.as_ptr());
-            let process_name = cstr.to_string_lossy().into_owned();
-            Ok(process_name)
-        } else {
-            Err(io::Error::last_os_error())
-        }
-    }
-}
-
 fn main() {
-    let exe_name = "dummy.exe";
-    let search_value = "test2";
-    let new_value = "test0";
+    let exe_name = "myfriend.exe";
+    let search_value = "-pure_2";
+    let new_value = "-pure_0";
 
-    println!("search value: {:?}", search_value);
-    println!("   new value: {:?}", new_value);
+    // println!("search value: {:?}", search_value);
+    // println!("   new value: {:?}", new_value);
 
     let _ = auto_scan_and_modify_memory(exe_name, search_value, new_value);
 }
